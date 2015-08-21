@@ -126,7 +126,11 @@
   };
 
   ip_allowed = function(ip) {
-    return config.worker.allowed_clients.indexOf(ip) !== -1;
+    if (config.worker.allowed_clients) {
+      return config.worker.allowed_clients.indexOf(ip) !== -1;
+    } else {
+      return true;
+    }
   };
 
   stop = function() {
