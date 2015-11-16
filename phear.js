@@ -3,9 +3,9 @@
   var Config, Logger, Memcached, argv, close_response, config, express, favicon, handle_request, ip_allowed, logger, memcached, mode, random_worker, request, respawn, serve, spawn, stop, url, workers;
 
   spawn = function(n) {
-    var _, i, j, len, results, worker_config;
-    results = [];
-    for (i = j = 0, len = workers.length; j < len; i = ++j) {
+    var i, worker_config, _, _i, _len, _results;
+    _results = [];
+    for (i = _i = 0, _len = workers.length; _i < _len; i = ++_i) {
       _ = workers[i];
       workers[i] = {
         process: null,
@@ -20,9 +20,9 @@
       });
       workers[i].process.start();
       config.worker.port += 1;
-      results.push(logger.info("phear", "Worker " + (i + 1) + " of " + n + " started."));
+      _results.push(logger.info("phear", "Worker " + (i + 1) + " of " + n + " started."));
     }
-    return results;
+    return _results;
   };
 
   serve = function(port) {
@@ -105,8 +105,8 @@
   };
 
   random_worker = function() {
-    var ref, worker;
-    while ((worker != null ? (ref = worker.process) != null ? ref.status : void 0 : void 0) !== "running") {
+    var worker, _ref;
+    while ((worker != null ? (_ref = worker.process) != null ? _ref.status : void 0 : void 0) !== "running") {
       worker = workers[Math.floor(Math.random() * workers.length)];
     }
     return worker;
@@ -134,10 +134,10 @@
   };
 
   stop = function() {
-    var j, len, worker;
+    var worker, _i, _len;
     logger.info("phear", "Kill process and workers.");
-    for (j = 0, len = workers.length; j < len; j++) {
-      worker = workers[j];
+    for (_i = 0, _len = workers.length; _i < _len; _i++) {
+      worker = workers[_i];
       worker.process.stop();
     }
     return process.kill();

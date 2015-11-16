@@ -139,14 +139,11 @@ close_response = (inst, status, response) ->
   logger.info inst, "Ended process with status #{status.toUpperCase()}."
 
 ip_allowed = (ip) ->
-  if config.worker.allowed_clients
-    config.worker.allowed_clients.indexOf(ip) isnt -1
-  else
-    return true
+  config.worker.allowed_clients.indexOf(ip) isnt -1
 
 stop = ->
   logger.info "phear", "Kill process and workers."
-
+  
   # Send stop signal to all workers.
   for worker in workers
     worker.process.stop()
