@@ -20,6 +20,20 @@ node phearjs
 Then open [http://localhost:8100/status](http://localhost:8100/status) in your browser. It
 should show some numbers.
 
+# Configuration
+
+Example config files are located in `/config`. `config.json` is the default configuration file. To use the provided hooks, a javascript configuration file must be used.
+
+## Hooks
+
+```js
+after_successful_request: function(inst, statusCode, body) {}
+```
+
+```js
+after_failed_request: function(inst, statusCode, message) {}
+```
+
 # Running
 
 Phear.js accepts these command-line arguments:

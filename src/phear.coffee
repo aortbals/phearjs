@@ -120,6 +120,8 @@ handle_request = (req, res) ->
     res.end()
     stats.requests.ok += 1
     active_request_handlers -= 1
+    if hooks.after_successful_request
+      hooks.after_successful_request("phear-#{thread_number}", statusCode, body)
 
   active_request_handlers += 1
   cache_namespace = "global-"
@@ -205,6 +207,9 @@ close_response = (inst, status, response, refused=false) ->
   else
     stats.requests.fail += 1
 
+  if hooks.after_failed_request
+    hooks.after_failed_request(inst, response.statusCode, status)
+
   logger.info inst, "Ended process with status #{status.toUpperCase()}."
 
 # Count the number of request handler threads
@@ -228,6 +233,7 @@ stop = ->
 # -----------------
 
 # 3rd-party libs
+path = require('path')
 basic_auth = require('basic-auth')
 express = require('express')
 Memcached = require('memcached')
@@ -255,8 +261,10 @@ Stats = require("./lib/stats.js")
 mode = argv.e
 
 # Parse configuration for environment
-config = new Config(argv.c, mode).config
+config_path = path.resolve('.', argv.c)
+config = new Config(config_path, mode).config
 config.worker.environment = mode
+hooks = config.hooks
 
 # Instantiate stuff
 logger = new Logger(config, config.base_port)

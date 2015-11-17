@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 (function() {
-  var Config, Logger, Memcached, Stats, active_request_handlers, argv, basic_auth, close_response, config, do_with_random_worker, express, get_running_workers, handle_request, ip_allowed, logger, memcached, memcached_options, mode, mommy, next_thread_number, package_definition, request, respawn, serve, spawn, stats, stop, tree_kill, url, workers,
+  var Config, Logger, Memcached, Stats, active_request_handlers, argv, basic_auth, close_response, config, config_path, do_with_random_worker, express, get_running_workers, handle_request, hooks, ip_allowed, logger, memcached, memcached_options, mode, mommy, next_thread_number, package_definition, path, request, respawn, serve, spawn, stats, stop, tree_kill, url, workers,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   spawn = function(n) {
@@ -107,7 +107,10 @@
       }
       res.end();
       stats.requests.ok += 1;
-      return active_request_handlers -= 1;
+      active_request_handlers -= 1;
+      if (hooks.after_successful_request) {
+        return hooks.after_successful_request("phear-" + thread_number, statusCode, body);
+      }
     };
     active_request_handlers += 1;
     cache_namespace = "global-";
@@ -211,6 +214,9 @@
     } else {
       stats.requests.fail += 1;
     }
+    if (hooks.after_failed_request) {
+      hooks.after_failed_request(inst, response.statusCode, status);
+    }
     return logger.info(inst, "Ended process with status " + (status.toUpperCase()) + ".");
   };
 
@@ -233,6 +239,8 @@
       return tree_kill(process.pid, 'SIGKILL');
     });
   };
+
+  path = require('path');
 
   basic_auth = require('basic-auth');
 
@@ -263,9 +271,13 @@
 
   mode = argv.e;
 
-  config = new Config(argv.c, mode).config;
+  config_path = path.resolve('.', argv.c);
+
+  config = new Config(config_path, mode).config;
 
   config.worker.environment = mode;
+
+  hooks = config.hooks;
 
   logger = new Logger(config, config.base_port);
 
