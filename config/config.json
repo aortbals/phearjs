@@ -17,7 +17,8 @@
         "timeout": 10000,
         "parse_delay": 5000,
         "user_agent": "PhearBot/0.4.1 - http://phear.io",
-        "max_connections": 10
+        "max_connections": 10,
+        "log_messages": true
       }
     },
     "production": {
@@ -43,7 +44,8 @@
         "parse_delay": 5000,
         "user_agent": "PhearBot/0.4.1 - http://phear.io",
         "max_connections": 10,
-        "allowed_clients": ["127.0.0.1"]
+        "allowed_clients": ["127.0.0.1"],
+        "log_messages": false
       }
     }
   }

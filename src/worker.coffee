@@ -117,9 +117,16 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
     if msg.url?
       logger.info this_inst, "JavaScriptError on #{url}: #{msg.errorString} (#{msg.url})"
     else
-      logger.info this_inst, "JavaScriptError on #{url}: #{msg.errorString}"
+      logger.info this_inst, "JavaScriptError on #{url}: #{msg}"
+
+    if trace
+      logger.info this_inst, trace
 
     had_js_errors = true
+
+  page_inst.onConsoleMessage = (msg, lineNum, sourceId) ->
+    if config.log_messages
+      logger.info this_inst, "Console #{sourceId}\##{lineNum}: #{msg}"
 
   # Create an instance of PhantomJS's webpage (the actual fetching and parsing happens here)
   page_inst.open url, (status) ->
