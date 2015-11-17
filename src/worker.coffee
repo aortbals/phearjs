@@ -200,7 +200,10 @@ next_instance_number = ->
   mommy.spawned_instances = if mommy.spawned_instances > 10000 then 1 else mommy.spawned_instances + 1
 
 ip_allowed = (ip) ->
-  config.allowed_clients.indexOf(ip) isnt -1
+  if config.allowed_clients
+    config.allowed_clients.indexOf(ip) isnt -1
+  else
+    return true
 
 # Parse config, it's a bit sketchy to do this with a regex,
 # but PhantomJS doesn't work with e.g. the yargs package.
