@@ -46,7 +46,7 @@ serve = (port) ->
     # Check that we aren't overserving our workers
     if active_request_handlers >= running_workers_count * config.worker.max_connections
       res.statusCode = 503
-      return close_response("phear", "Service unavailable, maximum number of allowed connections reached.", res, true)
+      return close_response("phear", "Service unavailable, maximum number of allowed connections reached.", req, res, true)
     else
       handle_request(req, res)
 
@@ -62,7 +62,7 @@ serve = (port) ->
           return res.end()
       else
         res.statusCode = 403
-        return close_response("phear", "Forbidden.", res, true)
+        return close_response("phear", "Forbidden.", req, res, true)
 
     stats.requests.active = active_request_handlers
     stats.workers = workers
@@ -93,12 +93,12 @@ handle_request = (req, res) ->
   # requests directly to the worker.
   if mode != "development" and not ip_allowed(req.headers["real-ip"])
     res.statusCode = 403
-    return close_response("phear-#{thread_number}", "Forbidden.", res)
+    return close_response("phear-#{thread_number}", "Forbidden.", req, res)
 
   # Check if the necessary params are set and aren't empty
   if not req.query.fetch_url?
     res.statusCode = 400
-    return close_response("phear-#{thread_number}", "No URL requested, you have to set fetch_url=encoded_url.", res)
+    return close_response("phear-#{thread_number}", "No URL requested, you have to set fetch_url=encoded_url.", req, res)
 
   # Check headers for validity if set
   if req.query.headers?
@@ -106,7 +106,7 @@ handle_request = (req, res) ->
       JSON.parse(req.query.headers)
     catch
       res.statusCode = 400
-      return close_response("phear-#{thread_number}", "Additional headers not properly formatted, e.g.: encodeURIComponent('{extra: \"Yes.\"}').", res)
+      return close_response("phear-#{thread_number}", "Additional headers not properly formatted, e.g.: encodeURIComponent('{extra: \"Yes.\"}').", req, res)
 
   # Response with JSON/raw results
   respond = (statusCode, body) ->
@@ -121,7 +121,7 @@ handle_request = (req, res) ->
     stats.requests.ok += 1
     active_request_handlers -= 1
     if hooks?.after_successful_request
-      hooks.after_successful_request("phear-#{thread_number}", statusCode, body)
+      hooks.after_successful_request("phear-#{thread_number}", req, res, statusCode, body)
 
   active_request_handlers += 1
   cache_namespace = "global-"
@@ -159,7 +159,7 @@ handle_request = (req, res) ->
             respond(response.statusCode, body)
           catch err
             res.statusCode = 500
-            close_response("phear-#{thread_number}", "Request failed due to an internal server error.", res)
+            close_response("phear-#{thread_number}", "Request failed due to an internal server error.", req, res)
 
             if worker.process.status not in ["stopping", "stopped"]
               logger.info "phear-#{thread_number}", "Trying to restart worker with PID #{worker.process.pid}..."
@@ -191,7 +191,7 @@ get_running_workers = ->
   (worker for worker in workers when worker.process.status is "running")
 
 # Prettily close a response
-close_response = (inst, status, response, refused=false) ->
+close_response = (inst, status, request, response, refused=false) ->
   response.set "content-type", "application/json"
   statusCode = response.statusCode
 
@@ -209,7 +209,7 @@ close_response = (inst, status, response, refused=false) ->
     stats.requests.fail += 1
 
   if hooks?.after_failed_request
-    hooks.after_failed_request(inst, statusCode, status)
+    hooks.after_failed_request(inst, request, response, statusCode, status)
 
   logger.info inst, "Ended process with status #{status.toUpperCase()}."
 

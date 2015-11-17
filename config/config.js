@@ -21,10 +21,10 @@ module.exports = [
         log_messages: true
       },
       hooks: {
-        after_successful_request: function(inst, statusCode, body) {
+        after_successful_request: function(inst, request, response, statusCode, body) {
           console.log('[hook:after_successful_request]', inst, statusCode)
         },
-        after_failed_request: function(inst, statusCode, message) {
+        after_failed_request: function(inst, request, response, statusCode, message) {
           console.log('[hook:after_failed_request]', inst, statusCode, message)
         }
       }

@@ -37,7 +37,7 @@
       running_workers_count = get_running_workers().length;
       if (active_request_handlers >= running_workers_count * config.worker.max_connections) {
         res.statusCode = 503;
-        return close_response("phear", "Service unavailable, maximum number of allowed connections reached.", res, true);
+        return close_response("phear", "Service unavailable, maximum number of allowed connections reached.", req, res, true);
       } else {
         return handle_request(req, res);
       }
@@ -54,7 +54,7 @@
           }
         } else {
           res.statusCode = 403;
-          return close_response("phear", "Forbidden.", res, true);
+          return close_response("phear", "Forbidden.", req, res, true);
         }
       }
       stats.requests.active = active_request_handlers;
@@ -82,18 +82,18 @@
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     if (mode !== "development" && !ip_allowed(req.headers["real-ip"])) {
       res.statusCode = 403;
-      return close_response("phear-" + thread_number, "Forbidden.", res);
+      return close_response("phear-" + thread_number, "Forbidden.", req, res);
     }
     if (req.query.fetch_url == null) {
       res.statusCode = 400;
-      return close_response("phear-" + thread_number, "No URL requested, you have to set fetch_url=encoded_url.", res);
+      return close_response("phear-" + thread_number, "No URL requested, you have to set fetch_url=encoded_url.", req, res);
     }
     if (req.query.headers != null) {
       try {
         JSON.parse(req.query.headers);
       } catch (_error) {
         res.statusCode = 400;
-        return close_response("phear-" + thread_number, "Additional headers not properly formatted, e.g.: encodeURIComponent('{extra: \"Yes.\"}').", res);
+        return close_response("phear-" + thread_number, "Additional headers not properly formatted, e.g.: encodeURIComponent('{extra: \"Yes.\"}').", req, res);
       }
     }
     respond = function(statusCode, body) {
@@ -109,7 +109,7 @@
       stats.requests.ok += 1;
       active_request_handlers -= 1;
       if (typeof hooks !== "undefined" && hooks !== null ? hooks.after_successful_request : void 0) {
-        return hooks.after_successful_request("phear-" + thread_number, statusCode, body);
+        return hooks.after_successful_request("phear-" + thread_number, req, res, statusCode, body);
       }
     };
     active_request_handlers += 1;
@@ -148,7 +148,7 @@
             } catch (_error) {
               err = _error;
               res.statusCode = 500;
-              close_response("phear-" + thread_number, "Request failed due to an internal server error.", res);
+              close_response("phear-" + thread_number, "Request failed due to an internal server error.", req, res);
               if ((ref1 = worker.process.status) !== "stopping" && ref1 !== "stopped") {
                 logger.info("phear-" + thread_number, "Trying to restart worker with PID " + worker.process.pid + "...");
                 worker.process.stop(function() {
@@ -196,7 +196,7 @@
     return results;
   };
 
-  close_response = function(inst, status, response, refused) {
+  close_response = function(inst, status, request, response, refused) {
     var statusCode;
     if (refused == null) {
       refused = false;
@@ -217,7 +217,7 @@
       stats.requests.fail += 1;
     }
     if (typeof hooks !== "undefined" && hooks !== null ? hooks.after_failed_request : void 0) {
-      hooks.after_failed_request(inst, statusCode, status);
+      hooks.after_failed_request(inst, request, response, statusCode, status);
     }
     return logger.info(inst, "Ended process with status " + (status.toUpperCase()) + ".");
   };
