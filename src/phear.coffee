@@ -120,7 +120,7 @@ handle_request = (req, res) ->
     res.end()
     stats.requests.ok += 1
     active_request_handlers -= 1
-    if hooks.after_successful_request
+    if hooks?.after_successful_request
       hooks.after_successful_request("phear-#{thread_number}", statusCode, body)
 
   active_request_handlers += 1
@@ -193,10 +193,11 @@ get_running_workers = ->
 # Prettily close a response
 close_response = (inst, status, response, refused=false) ->
   response.set "content-type", "application/json"
+  statusCode = response.statusCode
 
   logger.info inst, "Ending process."
-  if [400, 403, 500, 503].indexOf(response.statusCode) > -1
-    response.status(response.statusCode).send JSON.stringify(
+  if [400, 403, 500, 503].indexOf(statusCode) > -1
+    response.status(statusCode).send JSON.stringify(
       success: false
       reason: status
     )
@@ -207,8 +208,8 @@ close_response = (inst, status, response, refused=false) ->
   else
     stats.requests.fail += 1
 
-  if hooks.after_failed_request
-    hooks.after_failed_request(inst, response.statusCode, status)
+  if hooks?.after_failed_request
+    hooks.after_failed_request(inst, statusCode, status)
 
   logger.info inst, "Ended process with status #{status.toUpperCase()}."
 

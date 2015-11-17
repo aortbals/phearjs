@@ -108,7 +108,7 @@
       res.end();
       stats.requests.ok += 1;
       active_request_handlers -= 1;
-      if (hooks.after_successful_request) {
+      if (typeof hooks !== "undefined" && hooks !== null ? hooks.after_successful_request : void 0) {
         return hooks.after_successful_request("phear-" + thread_number, statusCode, body);
       }
     };
@@ -197,13 +197,15 @@
   };
 
   close_response = function(inst, status, response, refused) {
+    var statusCode;
     if (refused == null) {
       refused = false;
     }
     response.set("content-type", "application/json");
+    statusCode = response.statusCode;
     logger.info(inst, "Ending process.");
-    if ([400, 403, 500, 503].indexOf(response.statusCode) > -1) {
-      response.status(response.statusCode).send(JSON.stringify({
+    if ([400, 403, 500, 503].indexOf(statusCode) > -1) {
+      response.status(statusCode).send(JSON.stringify({
         success: false,
         reason: status
       }));
@@ -214,8 +216,8 @@
     } else {
       stats.requests.fail += 1;
     }
-    if (hooks.after_failed_request) {
-      hooks.after_failed_request(inst, response.statusCode, status);
+    if (typeof hooks !== "undefined" && hooks !== null ? hooks.after_failed_request : void 0) {
+      hooks.after_failed_request(inst, statusCode, status);
     }
     return logger.info(inst, "Ended process with status " + (status.toUpperCase()) + ".");
   };
