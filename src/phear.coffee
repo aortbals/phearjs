@@ -212,7 +212,10 @@ next_thread_number = ->
   mommy.handler_thread_number = if mommy.handler_thread_number > 10000 then 1 else mommy.handler_thread_number + 1
 
 ip_allowed = (ip) ->
-  config.worker.allowed_clients.indexOf(ip) isnt -1
+  if config.worker.allowed_clients
+    config.worker.allowed_clients.indexOf(ip) isnt -1
+  else
+    return true
 
 stop = ->
   logger.info "phear", "Trying to kill process and #{workers.length} workers gently..."
