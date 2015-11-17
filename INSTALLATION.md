@@ -27,11 +27,11 @@ Example config files are located in `/config`. `config.json` is the default conf
 ## Hooks
 
 ```js
-after_successful_request: function(inst, statusCode, body) {}
+after_successful_request: function(inst, request, response, statusCode, body) {}
 ```
 
 ```js
-after_failed_request: function(inst, statusCode, message) {}
+after_failed_request: function(inst, request, response, statusCode, message) {}
 ```
 
 # Running
