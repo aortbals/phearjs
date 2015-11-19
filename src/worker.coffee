@@ -165,7 +165,8 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
 
           return
 
-        response.statusCode = 200
+        statusCodeFromMeta = get_meta_status_code(page_inst.content)
+        response.statusCode = statusCodeFromMeta or 200
         response.write JSON.stringify(
           success: true
           input_url: url
@@ -194,6 +195,11 @@ close_response = (inst, status, response) ->
 # Remove script tags from the page
 strip_scripts = (doc) ->
   doc.replace(/<script(?:.*?)>(?:[\S\s]*?)<\/script>/gi, "")
+
+metaTags = require('./utils/meta-tags')
+
+get_meta_status_code = (content) ->
+  metaTags.parseStatusCode(content)
 
 # Count the number of spawned PhantomJS page instances
 next_instance_number = ->
