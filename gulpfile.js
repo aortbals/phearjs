@@ -5,7 +5,7 @@ var $logger = $.util.log;
 
 var paths = {
   phear: ['./src/phear.coffee' ],
-  scripts: ['./src/*.coffee', '!./src/phear.coffee' ],
+  scripts: ['./src/**/*.coffee', './src/utils/*.coffee', '!./src/phear.coffee' ],
   views: ['./src/views/*']
 }
 
