@@ -3,10 +3,10 @@ HEADER_REGEX = /<meta[^<>]*(?:name=['"]prerender-header['"][^<>]*content=['"]([^
 
 exports.parseStatusCode = (html) ->
   matches = html.match(STATUS_CODE_REGEX)
-  if matches
-    try
-      return parseInt(matches[0])
-  null
+  if matches and matches.length > 1
+    return parseInt(matches[1]) || null
+  else
+    null
 
 exports.parseHeader = (html) ->
   matches = html.match(HEADER_REGEX)
