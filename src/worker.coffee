@@ -155,7 +155,7 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
       input_url: url
       final_url: final_url
       request_headers: request_headers
-      response_headers: fetch_url_headers
+      response_headers: page_inst.fetch_url_headers
       had_js_errors: had_js_errors
       content: strip_scripts(page_inst.content)
     )
@@ -180,12 +180,12 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
       page_inst.close()
     else
       logger.info this_inst, "Fetched #{url} parsing with a parse_delay of #{parse_delay} ms."
-      fetch_url_headers = {}
+      page_inst.fetch_url_headers = {}
 
       # Add the headers to the response!
       for i of headers[final_url]
         # We make the keys lowercase, HTTP header keys are case-insensitive. (http://stackoverflow.com/questions/5258977/are-http-headers-case-sensitive)
-        fetch_url_headers[headers[final_url][i]["name"].toLowerCase()] = headers[final_url][i]["value"]
+        page_inst.fetch_url_headers[headers[final_url][i]["name"].toLowerCase()] = headers[final_url][i]["value"]
 
       response.setHeader "content-type", "application/json"
 
