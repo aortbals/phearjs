@@ -252,6 +252,7 @@
         p = ignored_query_params[j];
         delete sanitized_url.query[p];
       }
+      delete sanitize_url.search;
       return url.format(sanitized_url);
     } else {
       return urlString;

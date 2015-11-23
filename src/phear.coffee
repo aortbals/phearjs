@@ -241,6 +241,10 @@ sanitize_url = (urlString) ->
   if sanitized_url.query
     for p in ignored_query_params
       delete sanitized_url.query[p]
+
+    # Delete search so that the modified query string is used.
+    delete sanitize_url.search
+
     url.format(sanitized_url)
   else
     urlString
