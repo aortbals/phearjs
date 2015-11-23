@@ -129,8 +129,8 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
       logger.info this_inst, "[phantom:console] #{msg}"
 
   page_inst.onCallback = (data) ->
-    logger.info this_inst, "[phantom:callback] Rendering: #{data.rendering}"
-    if data.rendering
+    logger.info this_inst, "[phantom:callback] Rendering: #{data?.rendering}"
+    if data?.rendering
       if page_inst.parse_wait
         logger.info this_inst, "[phantom:callback] Cancelling parse_wait, evaluating immediately"
         cancelTimeout(page_inst.parse_wait)
