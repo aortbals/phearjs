@@ -128,6 +128,9 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
     if config.log_messages
       logger.info this_inst, "[phantom:console] #{msg}"
 
+  page_inst.onCallback = (data) ->
+    logger.info this_inst, "[phantom:callback] #{data}"
+
   # Create an instance of PhantomJS's webpage (the actual fetching and parsing happens here)
   page_inst.open url, (status) ->
 
