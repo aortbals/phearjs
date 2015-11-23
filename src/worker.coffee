@@ -134,7 +134,34 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
       if page_inst.parse_wait
         logger.info this_inst, "[phantom:callback] Cancelling parse_wait, evaluating immediately"
         cancelTimeout(page_inst.parse_wait)
-        evaluate_page(page_inst, response, page_inst.status)
+        evaluate_page()
+
+  evaluate_page = () ->
+    # In rare cases PhantomJS erroneously garbage collects the page object
+    if not page_inst?.hasOwnProperty('content')
+      response.statusCode = 500
+      close_response this_inst, "Rendering #{url} failed.", response
+
+      if page_inst?
+        logger.info this_inst, "Closed page instance."
+        page_inst.close()
+
+      return
+
+    statusCodeFromMeta = get_meta_status_code(page_inst.content)
+    response.statusCode = statusCodeFromMeta or 200
+    response.write JSON.stringify(
+      success: true
+      input_url: url
+      final_url: final_url
+      request_headers: request_headers
+      response_headers: fetch_url_headers
+      had_js_errors: had_js_errors
+      content: strip_scripts(page_inst.content)
+    )
+    close_response this_inst, page_inst.status, response
+    page_inst.close()
+    return
 
   # Create an instance of PhantomJS's webpage (the actual fetching and parsing happens here)
   page_inst.open url, (status) ->
@@ -163,36 +190,7 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
       response.setHeader "content-type", "application/json"
 
       # The page was requested, now we give PhantomJS parse_delay milliseconds to evaluate the page
-      page_inst.parse_wait = setTimeout (->
-        evaluate_page(page_inst, response, status)
-      ), parse_delay
-
-evaluate_page = (page_inst, response, status) ->
-  # In rare cases PhantomJS erroneously garbage collects the page object
-  if not page_inst?.hasOwnProperty('content')
-    response.statusCode = 500
-    close_response this_inst, "Rendering #{url} failed.", response
-
-    if page_inst?
-      logger.info this_inst, "Closed page instance."
-      page_inst.close()
-
-    return
-
-  statusCodeFromMeta = get_meta_status_code(page_inst.content)
-  response.statusCode = statusCodeFromMeta or 200
-  response.write JSON.stringify(
-    success: true
-    input_url: url
-    final_url: final_url
-    request_headers: request_headers
-    response_headers: fetch_url_headers
-    had_js_errors: had_js_errors
-    content: strip_scripts(page_inst.content)
-  )
-  close_response this_inst, status, response
-  page_inst.close()
-  return
+      page_inst.parse_wait = setTimeout(evaluate_page, parse_delay)
 
 # prettily close a response.
 close_response = (inst, status, response) ->
