@@ -129,7 +129,8 @@ handle_request = (req, res) ->
   if req.query.cache_namespace?
     cache_namespace = req.query.cache_namespace
 
-  cache_key = "#{cache_namespace}#{req.query.fetch_url}"
+  cache_url = sanitize_url(req.query.fetch_url)
+  cache_key = "#{cache_namespace}#{cache_url}"
 
   # Where the magic happens.
   memcached.get cache_key, (error, data) ->
@@ -153,7 +154,7 @@ handle_request = (req, res) ->
           try
             if response.statusCode == 200
               memcached.set cache_key, body, config.cache_ttl, ->
-                logger.info "phear-#{thread_number}", "Stored #{req.query.fetch_url} in cache"
+                logger.info "phear-#{thread_number}", "Stored #{cache_key} in cache"
 
             # Return to requester!
             respond(response.statusCode, body)
@@ -229,6 +230,21 @@ stop = ->
   tree_kill process.pid, 'SIGTERM', ->
     logger.info "phear", "Trying to kill process and workers forcefully..."
     tree_kill process.pid, 'SIGKILL'
+
+sanitize_url = (urlString) ->
+  ignored_query_params = [
+    '_escaped_fragment_=',
+    '_escaped_fragment_',
+    'force',
+    'raw'
+  ]
+  sanitized_url = url.parse(urlString)
+  if sanitized_url.query
+    for p in ignored_query_params
+      delete sanitized_url.query[p]
+    url.format(sanitized_url)
+  else
+    urlString
 
 # Initialization
 # -----------------

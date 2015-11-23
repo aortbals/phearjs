@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 (function() {
-  var Config, Logger, Memcached, Stats, active_request_handlers, argv, basic_auth, close_response, config, config_path, do_with_random_worker, express, get_running_workers, handle_request, hooks, ip_allowed, logger, memcached, memcached_options, mode, mommy, next_thread_number, package_definition, path, request, respawn, serve, spawn, stats, stop, tree_kill, url, workers,
+  var Config, Logger, Memcached, Stats, active_request_handlers, argv, basic_auth, close_response, config, config_path, do_with_random_worker, express, get_running_workers, handle_request, hooks, ip_allowed, logger, memcached, memcached_options, mode, mommy, next_thread_number, package_definition, path, request, respawn, sanitize_url, serve, spawn, stats, stop, tree_kill, url, workers,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   spawn = function(n) {
@@ -76,7 +76,7 @@
   };
 
   handle_request = function(req, res) {
-    var cache_key, cache_namespace, respond, thread_number;
+    var cache_key, cache_namespace, cache_url, respond, thread_number;
     thread_number = next_thread_number();
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -117,7 +117,8 @@
     if (req.query.cache_namespace != null) {
       cache_namespace = req.query.cache_namespace;
     }
-    cache_key = "" + cache_namespace + req.query.fetch_url;
+    cache_url = sanitize_url(req.query.fetch_url);
+    cache_key = "" + cache_namespace + cache_url;
     return memcached.get(cache_key, function(error, data) {
       var ref;
       if ((error != null) || (data == null) || ((ref = req.query.force) === "true" || ref === "1")) {
@@ -141,7 +142,7 @@
             try {
               if (response.statusCode === 200) {
                 memcached.set(cache_key, body, config.cache_ttl, function() {
-                  return logger.info("phear-" + thread_number, "Stored " + req.query.fetch_url + " in cache");
+                  return logger.info("phear-" + thread_number, "Stored " + cache_key + " in cache");
                 });
               }
               return respond(response.statusCode, body);
@@ -240,6 +241,21 @@
       logger.info("phear", "Trying to kill process and workers forcefully...");
       return tree_kill(process.pid, 'SIGKILL');
     });
+  };
+
+  sanitize_url = function(urlString) {
+    var ignored_query_params, j, len, p, sanitized_url;
+    ignored_query_params = ['_escaped_fragment_=', '_escaped_fragment_', 'force', 'raw'];
+    sanitized_url = url.parse(urlString);
+    if (sanitized_url.query) {
+      for (j = 0, len = ignored_query_params.length; j < len; j++) {
+        p = ignored_query_params[j];
+        delete sanitized_url.query[p];
+      }
+      return url.format(sanitized_url);
+    } else {
+      return urlString;
+    }
   };
 
   path = require('path');
