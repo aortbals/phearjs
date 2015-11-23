@@ -233,12 +233,11 @@ stop = ->
 
 sanitize_url = (urlString) ->
   ignored_query_params = [
-    '_escaped_fragment_=',
     '_escaped_fragment_',
     'force',
     'raw'
   ]
-  sanitized_url = url.parse(urlString)
+  sanitized_url = url.parse(urlString, true)
   if sanitized_url.query
     for p in ignored_query_params
       delete sanitized_url.query[p]

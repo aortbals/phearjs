@@ -245,8 +245,8 @@
 
   sanitize_url = function(urlString) {
     var ignored_query_params, j, len, p, sanitized_url;
-    ignored_query_params = ['_escaped_fragment_=', '_escaped_fragment_', 'force', 'raw'];
-    sanitized_url = url.parse(urlString);
+    ignored_query_params = ['_escaped_fragment_', 'force', 'raw'];
+    sanitized_url = url.parse(urlString, true);
     if (sanitized_url.query) {
       for (j = 0, len = ignored_query_params.length; j < len; j++) {
         p = ignored_query_params[j];
