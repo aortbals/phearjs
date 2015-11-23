@@ -129,13 +129,21 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
       logger.info this_inst, "[phantom:console] #{msg}"
 
   page_inst.onCallback = (data) ->
-    logger.info this_inst, "[phantom:callback] #{data}"
+    logger.info this_inst, "[phantom:callback] Rendering: #{data.rendering}"
+    if data.rendering
+      if page_inst.parse_wait
+        logger.info this_inst, "[phantom:callback] Cancelling parse_wait, evaluating immediately"
+        cancelTimeout(page_inst.parse_wait)
+        evaluate_page(page_inst, response, page_inst.status)
 
   # Create an instance of PhantomJS's webpage (the actual fetching and parsing happens here)
   page_inst.open url, (status) ->
 
     # Prevent double execution
     if done then return true else done = true
+
+    # Set the status
+    page_inst.status = status
 
     # On success, parse & evaluate the page, otherwise don't bother and return the error.
     unless status is "success"
@@ -156,33 +164,35 @@ fetch_url = (url, response, this_inst, parse_delay, request_headers) ->
 
       # The page was requested, now we give PhantomJS parse_delay milliseconds to evaluate the page
       page_inst.parse_wait = setTimeout (->
-
-        # In rare cases PhantomJS erroneously garbage collects the page object
-        if not page_inst?.hasOwnProperty('content')
-          response.statusCode = 500
-          close_response this_inst, "Rendering #{url} failed.", response
-
-          if page_inst?
-            logger.info this_inst, "Closed page instance."
-            page_inst.close()
-
-          return
-
-        statusCodeFromMeta = get_meta_status_code(page_inst.content)
-        response.statusCode = statusCodeFromMeta or 200
-        response.write JSON.stringify(
-          success: true
-          input_url: url
-          final_url: final_url
-          request_headers: request_headers
-          response_headers: fetch_url_headers
-          had_js_errors: had_js_errors
-          content: strip_scripts(page_inst.content)
-        )
-        close_response this_inst, status, response
-        page_inst.close()
-        return
+        evaluate_page(page_inst, response, status)
       ), parse_delay
+
+evaluate_page = (page_inst, response, status) ->
+  # In rare cases PhantomJS erroneously garbage collects the page object
+  if not page_inst?.hasOwnProperty('content')
+    response.statusCode = 500
+    close_response this_inst, "Rendering #{url} failed.", response
+
+    if page_inst?
+      logger.info this_inst, "Closed page instance."
+      page_inst.close()
+
+    return
+
+  statusCodeFromMeta = get_meta_status_code(page_inst.content)
+  response.statusCode = statusCodeFromMeta or 200
+  response.write JSON.stringify(
+    success: true
+    input_url: url
+    final_url: final_url
+    request_headers: request_headers
+    response_headers: fetch_url_headers
+    had_js_errors: had_js_errors
+    content: strip_scripts(page_inst.content)
+  )
+  close_response this_inst, status, response
+  page_inst.close()
+  return
 
 # prettily close a response.
 close_response = (inst, status, response) ->
